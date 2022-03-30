@@ -84,8 +84,9 @@ class PostController extends Controller
     public function edit(Post $post)
     {
         $categories = Category::all();
+        $post_tag_ids = $post->tags->pluck('id')->toArray();
         $tags = Tag::all();
-        return view('admin.posts.edit', compact('post', 'categories', 'tags'));
+        return view('admin.posts.edit', compact('post', 'categories', 'tags', 'post_tag_ids'));
     }
 
     /**
@@ -102,11 +103,16 @@ class PostController extends Controller
             'content' => 'required |string',
             'image' => 'nullable|url',
             'category_id' => 'nullable|exists:categories,id',
-            'tags' => 'nullable|exist:tags,id'
+            'tags' => 'nullable|exists:tags,id'
         ]);
         $data = $request->all();
         $data['slug'] = Str::slug($request->title, '-');
         $post->update($data);
+        if (array_key_exists('tags', $data)) {
+            $post->tags()->sync($data['tags']);
+        } else {
+            $post->tags()->detach();
+        }
         return redirect()->route('admin.posts.show', compact('post'));
     }
 

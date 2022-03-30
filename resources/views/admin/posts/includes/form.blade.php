@@ -59,7 +59,7 @@
                 <hr>
                 @foreach($tags as $tag)
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="tag-{{$tag->id}}" value="{{$tag->id}}" name="tags[]" role="button" @if(in_array($tag->id, old('tags') ?? [])) checked @endif>
+                    <input class="form-check-input" type="checkbox" id="tag-{{$tag->id}}" value="{{$tag->id}}" name="tags[]" role="button" @if(in_array($tag->id, old('tags', $post_tag_ids ) ?? [])) checked @endif>
                     <label class="form-check-label" for="tag-{{$tag->id}}"> {{$tag->label}} </label>
                 </div>
                 @endforeach

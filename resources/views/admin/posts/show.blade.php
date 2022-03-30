@@ -8,6 +8,12 @@
                 <h4 class="card-title">{{$post->title}}
                 @if($post->category)<sub class="badge badge-pill badge-{{$post->category->color}}" style="font-size: 0.6rem" role="button">{{$post->category->label}}</sub>@endif
                 </h4>
+                <strong>Tags:</strong>
+                @forelse($post->tags as $tag)
+                    <span class="badge text-white" style="background-color: {{$tag->color}} ">{{ $tag->label }}</span>
+                @empty
+                    <span>Nessun tag associato a questo post</span>   
+                @endforelse
                 <p class="card-text">{{$post->content}}</p>
                 <div class="d-flex justify-content-around">
                     <a href="{{route('admin.posts.edit', $post->id)}}" class="btn btn-sm btn-warning">
