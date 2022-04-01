@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostController extends Controller
@@ -49,7 +50,7 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string|unique:posts|min:5|max:50',
             'content' => 'required |string',
-            'image' => 'nullable|url',
+            'image' => 'nullable|mimes:jpeg,bmp,png,ico',
             'category_id' => 'nullable|exists:categories,id',
             'tags' => 'nullable|exists:tags,id'
         ]);
@@ -59,8 +60,14 @@ class PostController extends Controller
         $post = new Post();
         $post->user_id = Auth::id();
         $post->fill($data);
+        if (array_key_exists('image', $data)) {
+            $img_path = Storage::put('img', $data['image']);
+            $post->image = $img_path;
+        }
         $post->save();
+
         if (array_key_exists('tags', $data)) $post->tags()->attach($data['tags']);
+
         return redirect()->route('admin.posts.index')->with('message', 'Il nuovo post è stato creato con successo');
     }
 
@@ -84,8 +91,10 @@ class PostController extends Controller
     public function edit(Post $post)
     {
         $categories = Category::all();
+
         $post_tag_ids = $post->tags->pluck('id')->toArray();
         $tags = Tag::all();
+
         return view('admin.posts.edit', compact('post', 'categories', 'tags', 'post_tag_ids'));
     }
 
@@ -101,20 +110,30 @@ class PostController extends Controller
         $request->validate([
             'title' => ['required', 'string', Rule::unique('posts')->ignore($post->id), 'min:5', 'max:50'],
             'content' => 'required |string',
-            'image' => 'nullable|url',
+            'image' => 'nullable|mimes:jpeg,bmp,png,ico',
             'category_id' => 'nullable|exists:categories,id',
             'tags' => 'nullable|exists:tags,id'
         ]);
+
         $data = $request->all();
+
         $data['slug'] = Str::slug($request->title, '-');
-        $post->update($data);
-        if (array_key_exists('tags', $data)) {
-            $post->tags()->sync($data['tags']);
-        } else {
-            $post->tags()->detach();
+
+        if (array_key_exists('image', $data)) {
+            if ($post->image) Storage::delete($post->image);
+            $img_path = Storage::put('img', $data['image']);
+            $post->image = $img_path;
         }
+        $post->update($data);
+
+        if (array_key_exists('tags', $data)) $post->tags()->sync($data['tags']);
+        else $post->tags()->detach();
+
         return redirect()->route('admin.posts.show', compact('post'));
     }
+
+
+
 
     /**
      * Remove the specified resource from storage.
@@ -124,7 +143,12 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
+        if ($post->image) Storage::delete($post->image);
+
+        if (count($post->tags)) $post->tags()->detach();
+
         $post->delete();
+
         return redirect()->route('admin.posts.index');
     }
 }

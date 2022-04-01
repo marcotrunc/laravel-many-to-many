@@ -1,9 +1,10 @@
 @if ($post ->exists)
-<form action="{{route('admin.posts.update',$post->id)}}" method="POST">
+<form action="{{route('admin.posts.update',$post->id)}}" method="POST" enctype="multipart/form-data">
     @method('PUT')
     @else
-    <form action="{{route('admin.posts.store')}}" method="POST">
-        @endif
+    <form action="{{route('admin.posts.store')}}" method="POST" enctype="multipart/form-data">
+        <h2>Nuovo Post</h2>
+    @endif
         @csrf
         <div class="row">        
             {{-- Errors --}}
@@ -45,21 +46,24 @@
                     <textarea class="form-control @error('content') is-invalid @enderror" id="content" rows="5" name="content">{{old('content',$post->content)}}</textarea>
                 </div>
             </div>
-            <div class="col-11">
+            <div class="col-4">
                 <div class="form-group">
-                    <label for="image">Link dell'immagine</label>
-                    <input type="text" class="form-control @error('image') is-invalid @enderror" id="image" name="image" value="{{old('image',$post->image)}}">
-                    <small id="imageHelp" class="form-text text-muted">Inserici qui il link dell'immagine</small>
+                    <label for="image">Inserisci immagine</label>
+                    <input type="file" class="form-control-file @error('image') is-invalid @enderror" id="image" name="image">
                 </div>
             </div>
-            <div class="col-1">
-                <img src="{{old('image', $post->image ?? 'https://www.geometrian.it/wp-content/uploads/2016/12/image-placeholder-500x500.jpg') }} " alt="{{$post->title}}" id="preview" width="100px" class="@error('image') is-invalid @enderror">
+             <div class="col-1">
+                @if($post->image)
+                    <img src="{{asset('storage/'.$post->image)}}" alt="{{$post->title}}" id="preview" width="100px" class="@error('image') is-invalid @enderror img-fluid">
+                @else
+                    <img src="https://www.geometrian.it/wp-content/uploads/2016/12/image-placeholder-500x500.jpg" alt="{{$post->title}}" id="preview" width="100px" class="@error('image') is-invalid @enderror img-fluid">
+                @endif
             </div>
             <div class="col-12 d-flex justidy-content-center">
                 <hr>
                 @foreach($tags as $tag)
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="tag-{{$tag->id}}" value="{{$tag->id}}" name="tags[]" role="button" @if(in_array($tag->id, old('tags', $post_tag_ids ) ?? [])) checked @endif>
+                    <input class="form-check-input" type="checkbox" id="tag-{{$tag->id}}" value="{{$tag->id}}" name="tags[]" role="button" @if(in_array($tag->id, old('tags', $post_tag_ids ?? [] ))) checked @endif>
                     <label class="form-check-label" for="tag-{{$tag->id}}"> {{$tag->label}} </label>
                 </div>
                 @endforeach
@@ -74,4 +78,4 @@
             </div>
         </form>
 </div>
-<script src="{{asset('js/image-preview.js')}}" defer></script>
+ <script src="{{asset('js/image-preview.js')}}" defer></script>
